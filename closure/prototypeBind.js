@@ -12,13 +12,14 @@ Function.prototype.bind = function(){
 var myObject = {};
 
 function myFunction(){
+	console.log(arguments); //arguments is an object.
 	return this == myObject;
 }
 
 //This is Window.
 console.log(myFunction());
 
-var newFunction = myFunction.bind(myObject);
+var newFunction = myFunction.bind(myObject,1);
 
 //This is myObject after binding.
 console.log(newFunction());
