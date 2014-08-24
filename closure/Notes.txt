@@ -1,0 +1,248 @@
+Closure is the scope created when a function is declared that allows
+the functions to access and manipulate variables that are external
+to that function.
+
+That is to say, closure is more like a boundary which define how far
+away a function can access the external variables.
+
+Note:
+	window is the most outer boundary. Every function call access
+the variables in this boundary. That is global variable.
+
+<javascript> 
+	var outerValue = 'ninjas';
+	var later;
+
+	function outerFunction(){
+		var innerValue = 'samurai';
+		function innerFunction(){
+			console.log("I can see " + outerValue);
+			console.log("I can see " + innerValue);
+		}
+		later = innerFunction;
+	}
+
+	outerFunction();
+
+	//It can call the innerFunction because later and innerFunction
+	//point to the same object in JavaScript.
+	//This reminds me of JavaScript object is just a reference of
+	//the unit of memory.
+	later(); 
+</javascript>
+
+Then how closures help us?
+
+1. Private variable.
+	There is no private property in JavaScript. But we can use closure to 
+	provide privacy.
+<javascript> 
+	// This is a constructor
+	function Ninja(){
+		if(!Ninja.count)
+			Ninja.count = 0;
+		Ninja.count++;
+		//If feints is declared in this way: this.feints = 0; Then
+		//feints is public.
+		var feints = 0;
+
+		// This is a getter
+		this.getFeints = function(){
+			return feints;
+		};
+
+		// This is a setter
+		this.feint = function(){
+			feints++;
+		};
+	}
+
+	var ninja = new Ninja();
+	var ninja2 = new Ninja();
+	console.log(Ninja.count);
+
+	ninja.feint();
+	console.log(ninja2.getFeints());
+
+	//alert(ninja.getFeints());
+	//alert(ninja.feints);
+	/*
+	ninja.feint = function(){
+		console.log(feints);//no way to mainipulate the private variable.
+	};
+	*/
+	ninja.feint();
+</javascript>
+
+From the example above, I know that feints lies in the closure but not 
+bounded to "this" object. That is why it is private. And this effectively
+prevents us from being able to make uncontrolled changes to the value of 
+the variables.(OOP)
+
+2.Callbacks and Timers.
+
+Store information
+
+<javascript>
+	function animateIt(elementId){
+		var elem = document.getElementById(elementId);
+		var tick = 0;
+		// here elem and tick are stored to provide effecient resuse 
+		// of these variables(without declaring global variables).
+		var timer = setInterval(function(){
+			if(tick < 100){
+				elem.style.left = elem.style.top = tick + "px"
+				tick++;
+			}
+			else{
+				clearInterval(timer); 
+			}
+		},10);
+	}
+	animateIt('box');
+</javascript>
+
+3.Bind context
+Rebind the context to a function call(The click example 5.7).
+<javascript>
+	function bind(context, name){
+		return function(){
+			return context[name].apply(context, arguments);
+		}
+	}
+</javascript>
+
+How it is done in Prototype.js ?
+<javascript>
+	Function.prototype.bind = function(){
+		var fn = this, args = Array.prototype.slice.call(arguments),
+			object = args.shift();
+		return function(){
+			//Concating the two sets of arguments can override the function!!
+			return fn.apply(object, 
+					args.concat(Array.prototype.slice.call(arguments))
+				);
+		};
+	};
+
+	var myObject = {};
+
+	//function should have a name
+	function myFunction(){
+		// I found out that arguments is an arry-like object 
+		// {'0': arg0, '1': arg1, ...}
+		console.log(arguments)
+		return this == myObject;
+	}
+
+	//This is Window.
+	console.log(myFunction());
+
+	var newFunction = myFunction.bind(myObject);
+
+	//This is myObject after binding.
+	console.log(newFunction());
+</javascript>
+
+4.Partially apply functions
+
+Partially apply functions is something like we reconstruct the 
+
+function to some extent. Prefill arguments to a function.
+<javascript>
+	//Partial Function: return a new function
+	//
+	//Arguments is an important abstraction of JavaScript.
+	Function.prototype.partial = function(){
+		var fn = this, // who calls partial
+			args = Array.prototype.slice.call(arguments);
+		return function(){
+			//this: who calls the function that calls(fn) the partial
+			return fn.apply(this, args.concat(Array.prototype.slice.call(arguments)));
+		};
+	};
+
+	String.prototype.csv = String.prototype.split.partial(/,\s*/);
+	var results = ("Mugan, Jin, Fuu").csv();
+	console.log(results); 
+</javascript>
+
+5.Overriding function
+a. It can do function memorize.
+<javascript>
+	Functioin.prototype.memorized = function(key){
+		this._values = this._values || {};
+		return this._values[key] ? this._value[key]:
+			this._value[key] = this.apply(this, arguments);
+	};
+	
+	Function.prototype.memorize = function(){
+		var fn = this; 
+		return function(){
+			return fn.memorize.apply(fn, arguments);
+		}
+	};
+</javascript>
+b. It can do function wrapper(add addictional work to an original function)
+	(wrap function put the original method as the first parameter of the new method)
+<javascript>
+	function wrap(object, method, wrapper){
+		var fn = object[method];
+		return object[method] = function(){
+			// It had to bind this to fn because fn may be called in the wrapper.
+			// Binding this to fn avoid fn has the context of Window!
+			return wrapper.apply(this, [fn.bind(this)].concat(Array.prototype.slice.call(arguments)));
+		}
+	}
+</javascript>
+
+6. Immediate functions
+
+the form of immediate function: (function(){})()
+
+The first set of parentheses is merely a set of delimiters enclosing an expression, whereas
+the second set is an operator like (3+4) * 5
+
+<javascript>
+	var someFunction = function(){}; 
+	//"()" is the operator of function call;
+	var result = (someFunction)();
+</javascript>
+
+When it comes to immediate functions call, Javascript interpretor creates an instance of an 
+anonymous function and executes the function and discards the function.(no reference).
+
+Self-contained wrappers for functionality.
+<javascript>
+	// anonymous function create a temporary scope.
+	(function(){
+		var clickNum = 0;
+		document.addEventListener("click", function(){
+			alert(++clickNum);	
+		}, false);
+	})();
+</javascript>
+Or it can be:
+<javascript>
+	document.addEventListener("click", function(){
+		var clickNum = 0;	
+		return function(){
+			alert(++clickNum);
+		};
+	}, false);
+</javascript>
+
+We can use immediate function call to sovle the conflict name using by different libraries.  
+For example, both Jquery and Prototype use '$' to reference to their own libiraries instance.
+
+<javascript>
+	var $ = function(){
+		alert('$ is not JQuery');
+	}
+
+	(function($){
+		// here $ is jQuery!	
+	})(jQuery);
+</javascript>
+
+Further more, the above example could be used to shorten the long reference.
