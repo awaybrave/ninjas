@@ -1,0 +1,30 @@
+<html>
+	<head>
+		<script>
+			var someFunction = function(){
+				return "some function called";
+			}
+
+			//"()" is the operator of function call;
+			var result = (someFunction)();
+			console.log(result); 
+
+			// anonymous function create a temporary scope.
+			(function(){
+				var clickNum = 0;
+				document.addEventListener("click", function(){
+					alert(++clickNum);	
+				}, false);
+			})();
+			// Or it can be implemented like the following:
+			document.addEventListener("click", function(){
+				var clickNum = 0;	
+				return function(){
+					alert(++clickNum);
+				};
+			}, false);
+		</script>
+	</head> 
+	<body>
+	</body>
+</html>
