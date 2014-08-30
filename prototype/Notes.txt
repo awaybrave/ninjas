@@ -1,0 +1,85 @@
+  Prototype is a property of functions. It has no effect until
+the function works as a constructor. When the new keyword is used
+to invoke a function calls the function as constructor, it creates
+a newly instantiated and empty object as its context.
+
+<javascript> 
+	function Ninja(){} 
+	Ninja.prototype.swingSword = function(){
+		return true;
+	};
+
+	var ninja1 = Ninja();
+
+	console.log("Ninja1 is undefined? ");
+	console.log(ninja1 == undefined);
+
+	var ninja2 = new Ninja();
+	console.log("Instance exsists and method is callable?");
+	console.log(ninja2 && ninja2.swingSword && ninja2.swingSword());
+</javascript>
+
+new is an operator. swingSword is attached not added to ninja2 object.
+(So defining prototype in reversed order makes sense too)
+
+Prototype is "live-updated":
+<javascript>
+	function Test(){}
+
+	var t = new Test();
+
+	try{
+		t.sayHello();
+	}catch(e){
+		console.log(e);
+	}
+
+	Test.prototype.sayHello = function(msg){
+		console.log(msg);
+	};
+
+	t.sayHello("Hello, my love");
+</javascript>
+
+In the above example, t has no reference to sayHello which throw
+an exception until I attach the sayHello the sayHello prototype 
+method to it.
+
+Only functions has prototype property and any function is object 
+<javascript>
+	var A = function(){};
+	A.prototype; // --> Object {}
+	var t = new A();
+	t.prototype; // undefined
+</javascript>
+
+How to use prototype to do inheritance?
+<javascript>
+	var People = function(){};
+	People.prototype.dance = function(){};
+	Ninja.prototype = new Ninja();
+	var ninjia = new Ninja();
+
+	//ninjia.dance is callable.
+</javascript>
+Don't do this: Ninja.prototype = People.prototype; Because any changes
+to Ninja's prototype influences People's property.
+
+As for DOM, HTMLElement is the prototype. Adding DOM prototype method
+could be dangerous.
+
+Extending prototype could be problematic. Object and Number are the
+ones which we should carefully extend.
+<javascript>
+	Object.prototype.keys = function(){
+		var keys = [];
+		for(var p in this)
+			keys.push(p);
+		return keys;
+	};
+</javascript>
+As keys is a property of Object, the keys return keys as an element of 
+its result.  
+
+But Javascript provides hasProperty() to tell whether the properties
+are defined on the object verus imported from a prototype.

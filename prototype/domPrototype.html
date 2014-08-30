@@ -1,0 +1,14 @@
+<html>
+	<div id="a">Div</div>
+	<div id="b">Div</div>
+	<script>
+		HTMLElement.prototype.remove = function(){
+			if(this.parentNode)
+				this.parentNode.removeChild(this);
+		}
+		var a = document.getElementById("a");
+		a.parentNode.removeChild(a);
+		var b = document.getElementById("b");
+		b.remove();
+	</script>
+</html>
